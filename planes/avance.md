@@ -78,8 +78,12 @@
   - Scripts validados para `lint`, `build` y `test`
   - Script raiz `test:e2e` para backend
   - Validacion CI extendida con prueba e2e de salud
+  - PR de prueba ejecutado desde `dev` hacia `main` con `validate` pasando en GitHub Actions
+  - Workflow de despliegue creado para publicar solo `apps/web` al hacer merge o push sobre `main`
+  - Secretos de GitHub Actions configurados para AWS y Serverless bajo el prefijo `TEST_IA`
+  - POC inicial del frontend desplegado en AWS con Serverless Framework sobre S3 website hosting
 - Pendiente:
-  - Ejecutar un PR de prueba desde `dev` hacia `main` para validar el flujo completo de proteccion y checks
+  - Definir `TEST_IA_WEB_API_URL` cuando exista un backend publico para la SPA desplegada
 
 ### Fase 7: documentacion y cierre
 - Estado: Pendiente
@@ -94,6 +98,8 @@
 - En SQL Server los estados y tipos de programa se persisten como strings controlados por la aplicacion, porque el conector Prisma usado aqui no acepta enums para este esquema.
 - El motor de reglas se mantiene desacoplado de controladores y repositorios para poder probarlo como servicio puro de dominio.
 - La API calcula el descuento al registrar o simular una compra; no depende del precio final enviado por el cliente para determinar la elegibilidad.
+- El POC de frontend en AWS se publica como sitio estatico S3 gestionado con Serverless Framework, separado del backend.
+- Los recursos de despliegue usan el identificador visible `TEST_IA` en tags, workflow y nombres funcionales, manteniendo compatibilidad con restricciones de nombres de AWS.
 
 ## Problemas encontrados
 
@@ -107,6 +113,6 @@
 
 ## Siguiente paso recomendado
 
-1. Considerar pruebas e2e del flujo completo paciente -> simulacion -> compra -> historial.
-2. Preparar migracion inicial y semilla de configuracion de descuentos para una base SQL Server real.
-3. Ajustar protecciones de rama y despliegue segun el entorno objetivo.
+1. Definir y cargar `TEST_IA_WEB_API_URL` con una API publica para que la SPA desplegada consuma endpoints reales fuera del entorno local.
+2. Considerar una distribucion CloudFront delante del bucket `TEST_IA` para HTTPS y mejor cacheo.
+3. Continuar el flujo normal con cambios en `dev` y despliegue automatico del frontend al mergear en `main`.

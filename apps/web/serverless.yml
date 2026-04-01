@@ -1,0 +1,65 @@
+service: test-ia-web
+frameworkVersion: '4'
+
+provider:
+  name: aws
+  stage: ${opt:stage, 'prod'}
+  region: ${opt:region, 'us-east-1'}
+  stackName: test-ia-web-${sls:stage}
+  deploymentMethod: direct
+  tags:
+    Project: TEST_IA
+    Service: TEST_IA-web
+    Stage: ${sls:stage}
+
+plugins:
+  - serverless-s3-sync
+
+custom:
+  bucketName: test-ia-web-${aws:accountId}-${aws:region}-${sls:stage}
+  s3Sync:
+    - bucketName: ${self:custom.bucketName}
+      localDir: dist
+      deleteRemoved: true
+
+resources:
+  Resources:
+    TESTIAWebBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.bucketName}
+        Tags:
+          - Key: Name
+            Value: TEST_IA-web-${sls:stage}
+          - Key: Project
+            Value: TEST_IA
+        OwnershipControls:
+          Rules:
+            - ObjectOwnership: BucketOwnerPreferred
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: false
+          BlockPublicPolicy: false
+          IgnorePublicAcls: false
+          RestrictPublicBuckets: false
+        WebsiteConfiguration:
+          IndexDocument: index.html
+          ErrorDocument: index.html
+    TESTIAWebBucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        Bucket: !Ref TESTIAWebBucket
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Sid: PublicReadGetObject
+              Effect: Allow
+              Principal: '*'
+              Action:
+                - s3:GetObject
+              Resource: !Sub arn:aws:s3:::${TESTIAWebBucket}/*
+
+  Outputs:
+    TESTIAWebBucketName:
+      Value: ${self:custom.bucketName}
+    TESTIAWebWebsiteUrl:
+      Value: !GetAtt TESTIAWebBucket.WebsiteURL

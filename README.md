@@ -29,6 +29,7 @@ El runtime del backend puede trabajar en Windows con autenticacion integrada loc
 - `npm run lint`: ejecuta lint en todo el monorepo
 - `npm run test`: ejecuta pruebas automatizadas
 - `npm run test:e2e`: ejecuta la prueba e2e del backend para salud
+- `npm --workspace web run deploy:aws`: compila y despliega solo el frontend `TEST_IA` a AWS con Serverless Framework
 
 ### API / Prisma
 
@@ -80,3 +81,23 @@ Fase 1, Fase 2, Fase 3 y Fase 4 completadas. Fase 5 en progreso con frontend ya 
 La API acepta llamadas cross-origin y el frontend de Vite usa proxy a `/api` en desarrollo para simplificar el flujo local.
 
 La validacion automatica actual en CI ejecuta `lint`, `build`, `test` y `test:e2e`.
+
+## Despliegue frontend AWS
+
+El frontend `web` se despliega por separado a AWS como sitio estatico usando Serverless Framework y recursos etiquetados como `TEST_IA`.
+
+- Configuracion Serverless: `apps/web/serverless.yml`
+- Workflow de despliegue: `.github/workflows/deploy-web.yml`
+- Trigger: merge o push a `main`
+- Region por defecto: `us-east-1`
+
+El workflow espera estos secretos en GitHub:
+
+- `TEST_IA_AWS_ACCESS_KEY_ID`
+- `TEST_IA_AWS_SECRET_ACCESS_KEY`
+- `TEST_IA_AWS_REGION`
+- `TEST_IA_SERVERLESS_ACCESS_KEY`
+- `TEST_IA_SERVERLESS_LICENSE_KEY`
+- `TEST_IA_WEB_API_URL` opcional para apuntar el frontend a una API publica
+
+Si `TEST_IA_WEB_API_URL` no se define, el frontend construido usa `/api` como base, util para desarrollo local pero no suficiente para una publicacion estatica sin backend expuesto.

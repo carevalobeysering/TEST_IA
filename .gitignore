@@ -1,0 +1,12 @@
+node_modules/
+dist/
+coverage/
+.turbo/
+.vite/
+*.log
+.DS_Store
+.env
+apps/api/node_modules/
+apps/web/node_modules/
+apps/api/package-lock.json
+apps/web/package-lock.json

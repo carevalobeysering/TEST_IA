@@ -1,0 +1,64 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlserver"
+  url      = env("DATABASE_URL")
+}
+
+model Patient {
+  id               String         @id @default(cuid()) @db.NVarChar(30)
+  name             String         @db.NVarChar(120)
+  uniqueIdentifier String         @unique @db.NVarChar(80)
+  registeredAt     DateTime       @default(now()) @db.DateTime2
+  purchases        Purchase[]
+  programStatus    ProgramStatus?
+
+  @@index([uniqueIdentifier])
+}
+
+model Purchase {
+  id                 String              @id @default(cuid()) @db.NVarChar(30)
+  patientId          String              @db.NVarChar(30)
+  patient            Patient             @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  purchaseDate       DateTime            @db.DateTime2
+  dose               String              @db.NVarChar(20)
+  quantity           Int                 @default(1)
+  discountApplied    Decimal             @default(0) @db.Decimal(10, 2)
+  isValid            Boolean             @default(true)
+  isFree             Boolean             @default(false)
+  listPrice          Decimal             @db.Decimal(10, 2)
+  finalPrice         Decimal             @db.Decimal(10, 2)
+  programTypeApplied String              @default("FULL_PRICE") @db.NVarChar(20)
+  createdAt          DateTime            @default(now()) @db.DateTime2
+
+  @@index([patientId, purchaseDate(sort: Desc)])
+}
+
+model ProgramStatus {
+  patientId              String                @id @db.NVarChar(30)
+  patient                Patient               @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  validPurchaseCount     Int                   @default(0)
+  rescueActive           Boolean               @default(false)
+  rescueActivatedAt      DateTime?             @db.DateTime2
+  rescueStage            Int?
+  lastValidPurchaseDate  DateTime?             @db.DateTime2
+  currentLevel           String                @default("1") @db.NVarChar(10)
+  state                  String                @default("ACTIVE") @db.NVarChar(20)
+  updatedAt              DateTime              @updatedAt @db.DateTime2
+
+  @@index([state])
+}
+
+model DiscountConfiguration {
+  id          String    @id @default(cuid()) @db.NVarChar(30)
+  dose        String    @db.NVarChar(20)
+  level       String    @db.NVarChar(10)
+  percentage  Decimal?  @db.Decimal(5, 2)
+  exactAmount Decimal?  @db.Decimal(10, 2)
+  isRescue    Boolean   @default(false)
+  createdAt   DateTime  @default(now()) @db.DateTime2
+
+  @@unique([dose, level, isRescue])
+}

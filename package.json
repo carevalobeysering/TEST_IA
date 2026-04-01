@@ -1,0 +1,25 @@
+{
+  "name": "mounjaro-discount-system",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "npm@10.2.4",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev --parallel",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "test:e2e": "npm --workspace api run test:e2e",
+    "test:watch": "turbo run test:watch --parallel",
+    "format": "turbo run format"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.0"
+  },
+  "engines": {
+    "node": ">=20.11.0"
+  }
+}

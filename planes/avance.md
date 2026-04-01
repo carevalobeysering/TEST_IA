@@ -72,12 +72,14 @@
   - Repositorio Git local inicializado con rama `main`
   - Rama `dev` creada a partir de `main`
   - Workflow ajustado para ejecutar validaciones solo en Pull Requests hacia `main`
+  - Repositorio remoto publicado en GitHub: `carevalobeysering/TEST_IA`
+  - Rama por defecto configurada en `main`
+  - Proteccion de rama aplicada en `main` para exigir Pull Request y el check `validate` antes del merge
   - Scripts validados para `lint`, `build` y `test`
   - Script raiz `test:e2e` para backend
   - Validacion CI extendida con prueba e2e de salud
 - Pendiente:
-  - Crear el repositorio remoto en GitHub o conectar `origin`
-  - Ajustar protecciones de rama en GitHub para requerir el check `validate` antes de permitir merge a `main`
+  - Ejecutar un PR de prueba desde `dev` hacia `main` para validar el flujo completo de proteccion y checks
 
 ### Fase 7: documentacion y cierre
 - Estado: Pendiente

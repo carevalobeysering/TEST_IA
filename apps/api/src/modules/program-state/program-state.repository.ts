@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
 import { PrismaService } from '../../persistence/prisma/prisma.service';
+import type { ProgramStatusRecord } from '../../persistence/prisma/prisma.types';
 
 type UpsertProgramStateInput = {
   patientId: string;
@@ -17,13 +18,13 @@ type UpsertProgramStateInput = {
 export class ProgramStateRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  findByPatientId(patientId: string) {
+  findByPatientId(patientId: string): Promise<ProgramStatusRecord | null> {
     return this.prisma.programStatus.findUnique({
       where: { patientId },
     });
   }
 
-  upsert(input: UpsertProgramStateInput) {
+  upsert(input: UpsertProgramStateInput): Promise<ProgramStatusRecord> {
     const { patientId, ...data } = input;
 
     return this.prisma.programStatus.upsert({

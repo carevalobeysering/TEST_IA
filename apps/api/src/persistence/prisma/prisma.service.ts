@@ -1,10 +1,19 @@
+/* eslint-disable prettier/prettier, @typescript-eslint/no-redundant-type-constituents, @typescript-eslint/no-require-imports, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return */
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import type { Patient, ProgramStatus, Purchase } from '@prisma/client';
-import sql from 'mssql/msnodesqlv8';
+import type * as Sql from 'mssql';
+
+import {
+  PatientRecord,
+  ProgramStatusRecord,
+  PurchaseRecord,
+} from './prisma.types';
+
+type SqlRow = Record<string, unknown>;
+const sql = require('mssql/msnodesqlv8') as typeof Sql;
 
 @Injectable()
 export class PrismaService implements OnModuleInit, OnModuleDestroy {
-  private pool: sql.ConnectionPool | null = null;
+  private pool: Sql.ConnectionPool | null = null;
 
   async onModuleInit() {
     this.pool = await sql.connect({
@@ -27,13 +36,17 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
   }
 
   readonly patient = {
-    create: async ({ data }: { data: Pick<Patient, 'name' | 'uniqueIdentifier'> }) => {
+    create: async ({
+      data,
+    }: {
+      data: Pick<PatientRecord, 'name' | 'uniqueIdentifier'>;
+    }) => {
       const id = this.createId();
       const result = await this.request()
         .input('id', sql.NVarChar(30), id)
         .input('name', sql.NVarChar(120), data.name)
         .input('uniqueIdentifier', sql.NVarChar(80), data.uniqueIdentifier)
-        .query(`
+        .query<SqlRow>(`
           INSERT INTO dbo.Patient (id, name, uniqueIdentifier, registeredAt)
           OUTPUT INSERTED.id, INSERTED.name, INSERTED.uniqueIdentifier, INSERTED.registeredAt
           VALUES (@id, @name, @uniqueIdentifier, SYSUTCDATETIME())
@@ -41,9 +54,13 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
 
       return this.mapPatient(result.recordset[0]);
     },
-    findMany: async ({ orderBy }: { orderBy?: { registeredAt?: 'desc' | 'asc' } } = {}) => {
+    findMany: async ({
+      orderBy,
+    }: {
+      orderBy?: { registeredAt?: 'desc' | 'asc' };
+    } = {}) => {
       const direction = orderBy?.registeredAt === 'asc' ? 'ASC' : 'DESC';
-      const result = await this.request().query(`
+      const result = await this.request().query<SqlRow>(`
         SELECT id, name, uniqueIdentifier, registeredAt
         FROM dbo.Patient
         ORDER BY registeredAt ${direction}
@@ -51,29 +68,41 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
 
       return result.recordset.map((row) => this.mapPatient(row));
     },
-    findUnique: async ({ where }: { where: { id?: string; uniqueIdentifier?: string } }) => {
+    findUnique: async ({
+      where,
+    }: {
+      where: { id?: string; uniqueIdentifier?: string };
+    }) => {
       const request = this.request();
 
       if (where.id) {
         request.input('id', sql.NVarChar(30), where.id);
-        const result = await request.query(`
+        const result = await request.query<SqlRow>(`
           SELECT TOP 1 id, name, uniqueIdentifier, registeredAt
           FROM dbo.Patient
           WHERE id = @id
         `);
 
-        return result.recordset[0] ? this.mapPatient(result.recordset[0]) : null;
+        return result.recordset[0]
+          ? this.mapPatient(result.recordset[0])
+          : null;
       }
 
       if (where.uniqueIdentifier) {
-        request.input('uniqueIdentifier', sql.NVarChar(80), where.uniqueIdentifier);
-        const result = await request.query(`
+        request.input(
+          'uniqueIdentifier',
+          sql.NVarChar(80),
+          where.uniqueIdentifier,
+        );
+        const result = await request.query<SqlRow>(`
           SELECT TOP 1 id, name, uniqueIdentifier, registeredAt
           FROM dbo.Patient
           WHERE uniqueIdentifier = @uniqueIdentifier
         `);
 
-        return result.recordset[0] ? this.mapPatient(result.recordset[0]) : null;
+        return result.recordset[0]
+          ? this.mapPatient(result.recordset[0])
+          : null;
       }
 
       return null;
@@ -110,7 +139,7 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
         .input('listPrice', sql.Decimal(10, 2), data.listPrice)
         .input('finalPrice', sql.Decimal(10, 2), data.finalPrice)
         .input('programTypeApplied', sql.NVarChar(20), data.programTypeApplied)
-        .query(`
+        .query<SqlRow>(`
           INSERT INTO dbo.Purchase (
             id,
             patientId,
@@ -165,7 +194,7 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
 
       query += ` ORDER BY purchaseDate ${direction}`;
 
-      const result = await request.query(query);
+      const result = await request.query<SqlRow>(query);
 
       return result.recordset.map((row) => this.mapPurchase(row));
     },
@@ -182,7 +211,7 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
         .input('isValid', sql.Bit, where.isValid ?? true)
         .input('isFree', sql.Bit, where.isFree ?? false);
 
-      const result = await request.query(`
+      const result = await request.query<SqlRow>(`
         SELECT TOP 1 *
         FROM dbo.Purchase
         WHERE patientId = @patientId
@@ -199,13 +228,15 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
     findUnique: async ({ where }: { where: { patientId: string } }) => {
       const result = await this.request()
         .input('patientId', sql.NVarChar(30), where.patientId)
-        .query(`
+        .query<SqlRow>(`
           SELECT TOP 1 *
           FROM dbo.ProgramStatus
           WHERE patientId = @patientId
         `);
 
-      return result.recordset[0] ? this.mapProgramStatus(result.recordset[0]) : null;
+      return result.recordset[0]
+        ? this.mapProgramStatus(result.recordset[0])
+        : null;
     },
     upsert: async ({
       where,
@@ -240,11 +271,15 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
         .input('rescueActive', sql.Bit, update.rescueActive)
         .input('rescueActivatedAt', sql.DateTime2, update.rescueActivatedAt)
         .input('rescueStage', sql.Int, update.rescueStage)
-        .input('lastValidPurchaseDate', sql.DateTime2, update.lastValidPurchaseDate)
+        .input(
+          'lastValidPurchaseDate',
+          sql.DateTime2,
+          update.lastValidPurchaseDate,
+        )
         .input('currentLevel', sql.NVarChar(10), update.currentLevel)
         .input('state', sql.NVarChar(20), update.state);
 
-      const result = await request.query(`
+      const result = await request.query<SqlRow>(`
         IF EXISTS (SELECT 1 FROM dbo.ProgramStatus WHERE patientId = @patientId)
         BEGIN
           UPDATE dbo.ProgramStatus
@@ -313,19 +348,30 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
   }
 
   private createId() {
-    return `c${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`.slice(0, 30);
+    return `c${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`.slice(
+      0,
+      30,
+    );
   }
 
-  private mapPatient(row: Record<string, unknown>): Patient {
+  private toDate(value: unknown): Date {
+    return value instanceof Date ? value : new Date(String(value));
+  }
+
+  private toNullableDate(value: unknown): Date | null {
+    return value == null ? null : this.toDate(value);
+  }
+
+  private mapPatient(row: SqlRow): PatientRecord {
     return {
       id: String(row.id),
       name: String(row.name),
       uniqueIdentifier: String(row.uniqueIdentifier),
-      registeredAt: new Date(String(row.registeredAt)),
+      registeredAt: this.toDate(row.registeredAt),
     };
   }
 
-  private mapPurchase(row: Record<string, unknown>): Purchase {
+  private mapPurchase(row: SqlRow): PurchaseRecord {
     return {
       id: String(row.id),
       patientId: String(row.patientId),
@@ -338,21 +384,24 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
       listPrice: Number(row.listPrice),
       finalPrice: Number(row.finalPrice),
       programTypeApplied: String(row.programTypeApplied),
-      createdAt: new Date(String(row.createdAt)),
-    } as unknown as Purchase;
+      createdAt: this.toDate(row.createdAt),
+    };
   }
 
-  private mapProgramStatus(row: Record<string, unknown>): ProgramStatus {
+  private mapProgramStatus(row: SqlRow): ProgramStatusRecord {
     return {
       patientId: String(row.patientId),
       validPurchaseCount: Number(row.validPurchaseCount),
       rescueActive: Boolean(row.rescueActive),
-      rescueActivatedAt: row.rescueActivatedAt ? new Date(String(row.rescueActivatedAt)) : null,
-      rescueStage: row.rescueStage === null || row.rescueStage === undefined ? null : Number(row.rescueStage),
-      lastValidPurchaseDate: row.lastValidPurchaseDate ? new Date(String(row.lastValidPurchaseDate)) : null,
+      rescueActivatedAt: this.toNullableDate(row.rescueActivatedAt),
+      rescueStage:
+        row.rescueStage === null || row.rescueStage === undefined
+          ? null
+          : Number(row.rescueStage),
+      lastValidPurchaseDate: this.toNullableDate(row.lastValidPurchaseDate),
       currentLevel: String(row.currentLevel),
       state: String(row.state),
-      updatedAt: row.updatedAt ? new Date(String(row.updatedAt)) : new Date(),
-    } as ProgramStatus;
+      updatedAt: this.toNullableDate(row.updatedAt) ?? new Date(),
+    };
   }
 }

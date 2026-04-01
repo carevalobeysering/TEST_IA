@@ -37,9 +37,8 @@ jobs:
           aws-region: ${{ secrets.TEST_IA_AWS_REGION }}
 
       - name: Deploy TEST_IA frontend
-        working-directory: apps/web
         env:
           SERVERLESS_ACCESS_KEY: ${{ secrets.TEST_IA_SERVERLESS_ACCESS_KEY }}
           SERVERLESS_LICENSE_KEY: ${{ secrets.TEST_IA_SERVERLESS_LICENSE_KEY }}
           VITE_API_URL: ${{ secrets.TEST_IA_WEB_API_URL }}
-        run: npm run deploy:aws
+        run: npm --workspace web run deploy:aws

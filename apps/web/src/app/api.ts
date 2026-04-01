@@ -79,7 +79,8 @@ export type RegisterPurchaseResponse = {
   reasons: string[];
 };
 
-const API_BASE_URL = (import.meta.env.VITE_API_URL ?? '/api').replace(/\/$/, '');
+const configuredApiUrl = import.meta.env.VITE_API_URL?.trim();
+const API_BASE_URL = (configuredApiUrl || '/api').replace(/\/$/, '');
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {

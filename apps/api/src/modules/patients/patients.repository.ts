@@ -1,29 +1,33 @@
 import { Injectable } from '@nestjs/common';
-import { Patient } from '@prisma/client';
 
 import { PrismaService } from '../../persistence/prisma/prisma.service';
+import type { PatientRecord } from '../../persistence/prisma/prisma.types';
 
 @Injectable()
 export class PatientsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  create(data: Pick<Patient, 'name' | 'uniqueIdentifier'>) {
+  create(
+    data: Pick<PatientRecord, 'name' | 'uniqueIdentifier'>,
+  ): Promise<PatientRecord> {
     return this.prisma.patient.create({ data });
   }
 
-  findAll() {
+  findAll(): Promise<PatientRecord[]> {
     return this.prisma.patient.findMany({
       orderBy: { registeredAt: 'desc' },
     });
   }
 
-  findById(id: string) {
+  findById(id: string): Promise<PatientRecord | null> {
     return this.prisma.patient.findUnique({
       where: { id },
     });
   }
 
-  findByUniqueIdentifier(uniqueIdentifier: string) {
+  findByUniqueIdentifier(
+    uniqueIdentifier: string,
+  ): Promise<PatientRecord | null> {
     return this.prisma.patient.findUnique({
       where: { uniqueIdentifier },
     });

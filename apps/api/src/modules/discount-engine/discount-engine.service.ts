@@ -1,5 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { ProgramStatus, Purchase } from '@prisma/client';
+
+import type {
+  ProgramStatusRecord,
+  PurchaseRecord,
+} from '../../persistence/prisma/prisma.types';
 
 const STANDARD_WINDOW_DAYS = 35;
 const RESET_WINDOW_START_DAY = 36;
@@ -72,8 +76,8 @@ type InternalState = {
 @Injectable()
 export class DiscountEngineService {
   evaluatePurchase(
-    currentState: ProgramStatus | null,
-    purchaseHistory: Purchase[],
+    currentState: ProgramStatusRecord | null,
+    purchaseHistory: PurchaseRecord[],
     input: PurchaseEvaluationInput,
   ): DiscountDecision {
     const normalizedState = this.normalizeState(currentState);
@@ -144,7 +148,7 @@ export class DiscountEngineService {
 
   projectCurrentState(
     patientId: string,
-    currentState: ProgramStatus | null,
+    currentState: ProgramStatusRecord | null,
     referenceDate: Date,
   ): ProgramStateView {
     const projectedState = this.projectStateInternal(
@@ -436,7 +440,7 @@ export class DiscountEngineService {
   }
 
   private normalizeState(
-    currentState: ProgramStatus | null,
+    currentState: ProgramStatusRecord | null,
     patientId = 'unknown-patient',
   ): InternalState {
     return {
@@ -515,7 +519,7 @@ export class DiscountEngineService {
   }
 
   private getRollingDiscountedUnits(
-    purchaseHistory: Purchase[],
+    purchaseHistory: PurchaseRecord[],
     referenceDate: Date,
   ) {
     return purchaseHistory.reduce((accumulator, purchase) => {

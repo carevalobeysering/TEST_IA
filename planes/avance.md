@@ -69,11 +69,15 @@
 - Estado: En progreso
 - Completado:
   - Workflow base de GitHub Actions para PR
+  - Repositorio Git local inicializado con rama `main`
+  - Rama `dev` creada a partir de `main`
+  - Workflow ajustado para ejecutar validaciones solo en Pull Requests hacia `main`
   - Scripts validados para `lint`, `build` y `test`
   - Script raiz `test:e2e` para backend
   - Validacion CI extendida con prueba e2e de salud
 - Pendiente:
-  - Ajustar protecciones de rama desde GitHub
+  - Crear el repositorio remoto en GitHub o conectar `origin`
+  - Ajustar protecciones de rama en GitHub para requerir el check `validate` antes de permitir merge a `main`
 
 ### Fase 7: documentacion y cierre
 - Estado: Pendiente
